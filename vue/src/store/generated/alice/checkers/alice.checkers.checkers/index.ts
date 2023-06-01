@@ -1,9 +1,10 @@
 import { txClient, queryClient, MissingWalletError , registry} from './module'
 
 import { Params } from "./module/types/checkers/params"
+import { SystemInfo } from "./module/types/checkers/system_info"
 
 
-export { Params };
+export { Params, SystemInfo };
 
 async function initTxClient(vuexGetters) {
 	return await txClient(vuexGetters['common/wallet/signer'], {
@@ -42,9 +43,11 @@ function getStructure(template) {
 const getDefaultState = () => {
 	return {
 				Params: {},
+				SystemInfo: {},
 				
 				_Structure: {
 						Params: getStructure(Params.fromPartial({})),
+						SystemInfo: getStructure(SystemInfo.fromPartial({})),
 						
 		},
 		_Registry: registry,
@@ -78,6 +81,12 @@ export default {
 						(<any> params).query=null
 					}
 			return state.Params[JSON.stringify(params)] ?? {}
+		},
+				getSystemInfo: (state) => (params = { params: {}}) => {
+					if (!(<any> params).query) {
+						(<any> params).query=null
+					}
+			return state.SystemInfo[JSON.stringify(params)] ?? {}
 		},
 				
 		getTypeStructure: (state) => (type) => {
@@ -136,6 +145,56 @@ export default {
 		
 		
 		
+		
+		 		
+		
+		
+		async QuerySystemInfo({ commit, rootGetters, getters }, { options: { subscribe, all} = { subscribe:false, all:false}, params, query=null }) {
+			try {
+				const key = params ?? {};
+				const queryClient=await initQueryClient(rootGetters)
+				let value= (await queryClient.querySystemInfo()).data
+				
+					
+				commit('QUERY', { query: 'SystemInfo', key: { params: {...key}, query}, value })
+				if (subscribe) commit('SUBSCRIBE', { action: 'QuerySystemInfo', payload: { options: { all }, params: {...key},query }})
+				return getters['getSystemInfo']( { params: {...key}, query}) ?? {}
+			} catch (e) {
+				throw new Error('QueryClient:QuerySystemInfo API Node Unavailable. Could not perform query: ' + e.message)
+				
+			}
+		},
+		
+		
+		async sendMsgHelp({ rootGetters }, { value, fee = [], memo = '' }) {
+			try {
+				const txClient=await initTxClient(rootGetters)
+				const msg = await txClient.msgHelp(value)
+				const result = await txClient.signAndBroadcast([msg], {fee: { amount: fee, 
+	gas: "200000" }, memo})
+				return result
+			} catch (e) {
+				if (e == MissingWalletError) {
+					throw new Error('TxClient:MsgHelp:Init Could not initialize signing client. Wallet is required.')
+				}else{
+					throw new Error('TxClient:MsgHelp:Send Could not broadcast Tx: '+ e.message)
+				}
+			}
+		},
+		
+		async MsgHelp({ rootGetters }, { value }) {
+			try {
+				const txClient=await initTxClient(rootGetters)
+				const msg = await txClient.msgHelp(value)
+				return msg
+			} catch (e) {
+				if (e == MissingWalletError) {
+					throw new Error('TxClient:MsgHelp:Init Could not initialize signing client. Wallet is required.')
+				} else{
+					throw new Error('TxClient:MsgHelp:Create Could not create message: ' + e.message)
+				}
+			}
+		},
 		
 	}
 }

@@ -24,7 +24,7 @@ var (
 )
 
 const (
-opWeightMsgHelp = "op_weight_msg_help"
+	opWeightMsgHelp = "op_weight_msg_help"
 	// TODO: Determine the simulation weight value
 	defaultWeightMsgHelp int = 100
 
