@@ -7,7 +7,15 @@ option go_package = "github.com/alice/checkers/x/checkers/types";
 
 // Msg defines the Msg service.
 service Msg {
-    // this line is used by starport scaffolding # proto/tx/rpc
+      rpc Help(MsgHelp) returns (MsgHelpResponse);
+// this line is used by starport scaffolding # proto/tx/rpc
+}
+
+message MsgHelp {
+  string creator = 1;
+}
+
+message MsgHelpResponse {
 }
 
 // this line is used by starport scaffolding # proto/tx/message
